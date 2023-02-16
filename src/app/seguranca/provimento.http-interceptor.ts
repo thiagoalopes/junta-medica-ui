@@ -18,8 +18,6 @@ export class ProvimentoHttpInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-
-
     if (!req.url.includes('/oauth/token') && !req.url.includes('https://viacep.com.br') && !this.authService.isAccessTokenInvalido()) {
       return from(this.authService.obterNovoAccessToken())
         .pipe(
@@ -34,8 +32,8 @@ export class ProvimentoHttpInterceptor implements HttpInterceptor {
             });
             return next.handle(req);
           })
-        );
-    }
+          );
+        }
     return next.handle(req);
   }
 }

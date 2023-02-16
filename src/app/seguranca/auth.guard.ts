@@ -21,7 +21,6 @@ export class AuthGuard implements CanActivate {
     next: ActivatedRouteSnapshot,
     state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
       if (this.authServive.isAccessTokenInvalido()) {
-
         return this.authServive.obterNovoAccessToken()
         .then(() => {
           if (this.authServive.isAccessTokenInvalido()) {
@@ -31,7 +30,8 @@ export class AuthGuard implements CanActivate {
           return true;
         });
         // Senao tiver nenhuma permissao retorne false
-      } else if (next.data.roles && !this.authServive.temQualquerPermissao(next.data.roles)) {
+      }
+      else if (next.data['roles'] && !this.authServive.temQualquerPermissao(next.data['roles'])) {
         this.router.navigate(['/nao-autorizado']);
         return false;
       }

@@ -1,7 +1,8 @@
+import { Router } from '@angular/router';
+import { Usuario } from './../usuario.model';
 import {Component} from '@angular/core';
-import {Router} from '@angular/router';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {AuthService} from '../auth.service';
+import { NgForm } from '@angular/forms';
 
 @Component({
     selector: 'app-login',
@@ -11,10 +12,23 @@ import {AuthService} from '../auth.service';
 export class LoginComponent {
     //public form: FormGroup;
     //public settings: Settings;
-    public loginInvalid: boolean = true;
-    public carregando: boolean = true;
-    public cor = '#ffffff';
-    public hide = true;
+    // public loginInvalid: boolean = true;
+    // public carregando: boolean = true;
+    // public cor = '#ffffff';
+    // public hide = true;
+
+    cpf: string = '';
+    senha: string = '';
+    usuario: Usuario = new Usuario;
+
+    constructor(private authService: AuthService, private router: Router){}
+
+    async entrar(){
+      this.authService.login(this.cpf, this.senha)
+      .then(()=>{
+        this.router.navigate(['/administracao/cargos']);
+      });
+    }
 
     // constructor(
     //     public appSettings: AppSettings,

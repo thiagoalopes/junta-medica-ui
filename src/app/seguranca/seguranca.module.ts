@@ -1,10 +1,10 @@
-
 import { FormsModule } from '@angular/forms';
+
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { AuthGuard } from './auth.guard';
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
 import { environment } from '../../environments/environment.prod';
 import { ProvimentoHttpInterceptor} from './provimento.http-interceptor';
 import {JwtHelperService, JwtModule} from '@auth0/angular-jwt';
@@ -14,6 +14,7 @@ import {LoginComponent} from './login/login.component';
     imports: [
         CommonModule,
         FormsModule,
+        HttpClientModule,
         JwtModule.forRoot({
           config: {
             tokenGetter: () => {
