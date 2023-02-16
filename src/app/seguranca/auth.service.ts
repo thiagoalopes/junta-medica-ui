@@ -13,17 +13,17 @@ export class AuthService {
 
   oauthTokenUrl: string;
   tokensRevokeUrl: string;
-  userInfoUrl: string;
   jwtPayload: any;
-  authorities: [];
+  usuarioPayloadUrl: string;
 
   constructor(
     private http: HttpClient,
     private jwtHelper: JwtHelperService,
   ) {
-    this.oauthTokenUrl = `${environment.apiUrl}/api/oauth/token`;
+    this.oauthTokenUrl = `${environment.apiUrl}/oauth/token`;
     this.tokensRevokeUrl = `${environment.apiUrl}/tokens/revoke`;
-    this.userInfoUrl = `${environment.apiUrl}/api/auth/usuarios/logado`;
+    this.usuarioPayloadUrl = `${environment.apiUrl}/api/auth/usuarios/logado`;
+
     this.carregarToken();
   }
 
@@ -51,7 +51,22 @@ export class AuthService {
       .then(response => {
         this.armazenarToken((response as Token).access_token);
         this.armazenarRefreshToken((response as Token).refresh_token);
-        this.jwtPayload = (response as Token).data;
+    
+        this.http.get(this.usuarioPayloadUrl, {headers, withCredentials: false})
+          .toPromise()
+          .then(response => {
+            localStorage.setItem('payload', JSON.stringify(response));
+          })
+          .catch(response => {
+            const responseError = response.error;
+            if (response.status === 400) {
+              if (responseError.error === 'invalid_grant' || responseError.error === 'invalid_request') {
+                return Promise.reject('Usuário ou senha inválida');
+              }
+            }
+            return Promise.reject(response);
+          });
+
       })
       .catch(response => {
         const responseError = response.error;
@@ -121,7 +136,9 @@ export class AuthService {
 
   private carregarToken() {
     const token = localStorage.getItem('token');
-    if (token) {
+    const payload = localStorage.getItem('payload');
+    if (token && payload) {
+      this.jwtPayload = JSON.parse(payload);
       this.armazenarToken(token);
     }
   }
