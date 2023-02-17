@@ -21,14 +21,11 @@ export class AuthGuard implements CanActivate {
     next: ActivatedRouteSnapshot,
     state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
 
-      return this.authServive.temQualquerPermissao(next.data['roles']).then(result=>{
-        if(next.data['roles'] && !result){
-          console.log(result);
-          this.router.navigate(['/']);
-          return false
-        }
-        return true;
-      });
+      // if(next.data['roles'] && !this.authServive.temQualquerPermissao(next.data['roles'])){
+      //   this.router.navigate(['/']);
+      //   return false
+      // }
+      return true;
 
       // return new Promise((resolve, reject)=>{
 

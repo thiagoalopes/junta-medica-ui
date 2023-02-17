@@ -42,19 +42,14 @@ export class AuthService {
 
     const body = `grant_type=password&client_id=${environment.clientId}&client_secret=${environment.clientSecret}&username=${usuario}&password=${senha}&scopes=`;
 
-    return this.http.post(this.oauthTokenUrl, body, {headers, withCredentials: false})
+    return this.http.post(this.oauthTokenUrl, body, {headers, withCredentials: true})
       .toPromise()
       .then(response => {
-
         this.armazenarToken((response as Token).access_token);
-        this.setCookie('refresh_token', JSON.stringify((response as Token).refresh_token), 1);
 
-        this.http.get(this.usuarioPayloadUrl, {headers, withCredentials: false})
+        this.http.get(this.usuarioPayloadUrl, {headers, withCredentials: true})
         .toPromise()
           .then(response => {
-
-            this.setCookie('payload', JSON.stringify(response), 1);
-            //this.jwtPayload = response;
 
           })
           .catch(response => {
@@ -98,35 +93,28 @@ export class AuthService {
 
     const body = `grant_type=refresh_token&refresh_token=${refreshToken}&client_id=${environment.clientId}&client_secret=${environment.clientSecret}&scopes=`;
 
-    return this.http.post(this.oauthTokenUrl, body, {headers, withCredentials: false})
+    return this.http.post(this.oauthTokenUrl, body, {headers, withCredentials: true})
       .toPromise()
       .then(response => {
         this.armazenarToken((response as Token).access_token);
-        this.setCookie('refresh_token', JSON.stringify((response as Token).refresh_token), 1);
       })
       .catch(response => {
         console.error('Não autorizado.', response.status);
       });
   }
 
-  temPermissao(permissao: string): Promise<boolean> {
-    return Promise.resolve().then(async () => {
-      // setTimeout(() => {
-        return await JSON.parse(this.getCookie('payload')?this.getCookie('payload'):'{}').permissoes.includes(permissao);
-      // }, 1000);
-      // return false;
-    });
+  temPermissao(permissao: string): boolean {
+    return JSON.parse(this.getCookie('payload'))
+      .permissoes.includes(permissao);
   }
 
-  temQualquerPermissao(permissoes: []): Promise<boolean> {
-    return  Promise.resolve().then(()=>{
+  temQualquerPermissao(permissoes: []): boolean {
       for (const permissao of permissoes) {
-        return Promise.resolve().then(()=>{
-          return this.temPermissao(permissao).then(result=>result);
-        });
+        if(this.temPermissao(permissao)){
+          return true;
+        }
       }
       return false;
-    });
   }
 
   private armazenarToken(token: string): void {
@@ -143,13 +131,6 @@ export class AuthService {
       this.armazenarToken(token);
     }
   }
-   setCookie(cname: string, cvalue: string, exdays: number) {
-    const d = new Date();
-    d.setTime(d.getTime() + (exdays*24*60*60*1000));
-    let expires = "expires="+ d.toUTCString();
-    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
-  }
-
    getCookie(cname: string) {
     let name = cname + "=";
     let decodedCookie = decodeURIComponent(document.cookie);
