@@ -1,4 +1,6 @@
+import { AuthService } from './seguranca/auth.service';
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -7,4 +9,11 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'junta-medica-ui';
+
+  constructor(private authService: AuthService, public router: Router){}
+
+  logout(){
+    this.authService.logout();
+    this.router.navigate(['']);
+  }
 }

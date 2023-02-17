@@ -23,7 +23,7 @@ export class LoginComponent {
 
     constructor(private authService: AuthService, private router: Router){}
 
-    async entrar(){
+    entrar(){
       this.authService.login(this.cpf, this.senha)
       .then(()=>{
         this.router.navigate(['/administracao/cargos']);

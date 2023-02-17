@@ -1,3 +1,4 @@
+import { retry } from 'rxjs/operators';
 import { Token } from './login/token.model';
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
@@ -13,7 +14,6 @@ export class AuthService {
 
   oauthTokenUrl: string;
   tokensRevokeUrl: string;
-  jwtPayload: any;
   usuarioPayloadUrl: string;
 
   constructor(
@@ -22,19 +22,15 @@ export class AuthService {
   ) {
     this.oauthTokenUrl = `${environment.apiUrl}/oauth/token`;
     this.tokensRevokeUrl = `${environment.apiUrl}/tokens/revoke`;
-    this.usuarioPayloadUrl = `${environment.apiUrl}/api/auth/usuarios/logado`;
+    this.usuarioPayloadUrl = `${environment.apiUrl}/api/auth/usuarios/payload`;
 
     this.carregarToken();
   }
 
-  logout(): Promise<void>{
-    return this.http.delete(this.tokensRevokeUrl, {withCredentials: true})
-      .toPromise()
-      .then(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refresh_token');
-        this.jwtPayload = null;
-      });
+  logout() {
+    this.deleteCookie('refresh_token');
+    this.deleteCookie('payload');
+    localStorage.removeItem('token');
   }
 
   login(usuario: string, senha: string): Promise<any>{
@@ -49,13 +45,17 @@ export class AuthService {
     return this.http.post(this.oauthTokenUrl, body, {headers, withCredentials: false})
       .toPromise()
       .then(response => {
+
         this.armazenarToken((response as Token).access_token);
-        this.armazenarRefreshToken((response as Token).refresh_token);
-    
+        this.setCookie('refresh_token', JSON.stringify((response as Token).refresh_token), 1);
+
         this.http.get(this.usuarioPayloadUrl, {headers, withCredentials: false})
-          .toPromise()
+        .toPromise()
           .then(response => {
-            localStorage.setItem('payload', JSON.stringify(response));
+
+            this.setCookie('payload', JSON.stringify(response), 1);
+            //this.jwtPayload = response;
+
           })
           .catch(response => {
             const responseError = response.error;
@@ -84,46 +84,49 @@ export class AuthService {
     return !token || this.jwtHelper.isTokenExpired(token);
   }
 
-  limparAccessToken() {
-    localStorage.removeItem('token');
-    this.jwtPayload = null;
-  }
-
-  limparRefreshToken() {
-    localStorage.removeItem('refresh_token');
-    this.jwtPayload = null;
-  }
-
   obterNovoAccessToken(): Promise<void> {
     let headers = new HttpHeaders();
     headers = headers
       .set('Content-Type', 'application/x-www-form-urlencoded')
       .set('Accept', 'application/json');
 
-    const body = `grant_type=refresh_token&refresh_token=${localStorage.getItem('refresh_token')}&username=${this.jwtPayload}&client_id=${environment.clientId}&client_secret=${environment.clientSecret}&scopes=`;
+      let refreshToken = null;
+
+      if(this.getCookie('refresh_token')){
+        refreshToken = JSON.parse(this.getCookie('refresh_token'));
+      }
+
+    const body = `grant_type=refresh_token&refresh_token=${refreshToken}&client_id=${environment.clientId}&client_secret=${environment.clientSecret}&scopes=`;
 
     return this.http.post(this.oauthTokenUrl, body, {headers, withCredentials: false})
       .toPromise()
       .then(response => {
         this.armazenarToken((response as Token).access_token);
-        this.armazenarRefreshToken((response as Token).refresh_token);
+        this.setCookie('refresh_token', JSON.stringify((response as Token).refresh_token), 1);
       })
       .catch(response => {
         console.error('Não autorizado.', response.status);
       });
   }
 
-  temPermissao(permissao: string) {
-    return this.jwtPayload && this.jwtPayload.permissoes.includes(permissao);
+  temPermissao(permissao: string): Promise<boolean> {
+    return Promise.resolve().then(async () => {
+      // setTimeout(() => {
+        return await JSON.parse(this.getCookie('payload')?this.getCookie('payload'):'{}').permissoes.includes(permissao);
+      // }, 1000);
+      // return false;
+    });
   }
 
-  temQualquerPermissao(permissoes: []): boolean {
-    for (const permissao of permissoes) {
-      if (this.temPermissao(permissao)) {
-        return true;
+  temQualquerPermissao(permissoes: []): Promise<boolean> {
+    return  Promise.resolve().then(()=>{
+      for (const permissao of permissoes) {
+        return Promise.resolve().then(()=>{
+          return this.temPermissao(permissao).then(result=>result);
+        });
       }
-    }
-    return false;
+      return false;
+    });
   }
 
   private armazenarToken(token: string): void {
@@ -136,10 +139,35 @@ export class AuthService {
 
   private carregarToken() {
     const token = localStorage.getItem('token');
-    const payload = localStorage.getItem('payload');
-    if (token && payload) {
-      this.jwtPayload = JSON.parse(payload);
+    if (token) {
       this.armazenarToken(token);
     }
+  }
+   setCookie(cname: string, cvalue: string, exdays: number) {
+    const d = new Date();
+    d.setTime(d.getTime() + (exdays*24*60*60*1000));
+    let expires = "expires="+ d.toUTCString();
+    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+  }
+
+   getCookie(cname: string) {
+    let name = cname + "=";
+    let decodedCookie = decodeURIComponent(document.cookie);
+    let ca = decodedCookie.split(';');
+    for(let i = 0; i <ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) == ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) == 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return "";
+  }
+
+  deleteCookie(cname: string) {
+    let expires = "expires="+'expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    document.cookie = cname + "=" + '' + ";" + expires + ";path=/";
   }
 }

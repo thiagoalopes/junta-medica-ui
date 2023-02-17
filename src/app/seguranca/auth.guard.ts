@@ -20,22 +20,35 @@ export class AuthGuard implements CanActivate {
   canActivate(
     next: ActivatedRouteSnapshot,
     state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
-      if (this.authServive.isAccessTokenInvalido()) {
-        return this.authServive.obterNovoAccessToken()
-        .then(() => {
-          if (this.authServive.isAccessTokenInvalido()) {
-            this.router.navigate(['/login']);
-            return false;
-          }
-          return true;
-        });
-        // Senao tiver nenhuma permissao retorne false
-      }
-      else if (next.data['roles'] && !this.authServive.temQualquerPermissao(next.data['roles'])) {
-        this.router.navigate(['/nao-autorizado']);
-        return false;
-      }
-      return true;
+
+      return this.authServive.temQualquerPermissao(next.data['roles']).then(result=>{
+        if(next.data['roles'] && !result){
+          console.log(result);
+          this.router.navigate(['/']);
+          return false
+        }
+        return true;
+      });
+
+      // return new Promise((resolve, reject)=>{
+
+      //   if (this.authServive.isAccessTokenInvalido()) {
+      //     this.authServive.obterNovoAccessToken()
+      //     .then(() => {
+      //       if (this.authServive.isAccessTokenInvalido()) {
+      //         this.router.navigate(['/login']);
+      //         resolve(false);
+      //       }
+      //       resolve(true);
+      //     });
+      //   }
+      //   else if (next.data['roles'] && !this.authServive.temQualquerPermissao(next.data['roles']).then(()=>{
+      //     this.router.navigate(['/nao-autorizado']);
+      //   })) {
+      //     resolve(false);
+      //   }
+      //   resolve(true);
+      // });
   }
 
 }
