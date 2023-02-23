@@ -1,0 +1,10 @@
+<nav *ngIf="isLogged == true">
+  <button >sair</button>
+  <span >Usuario: {{ payload.cpf }}</span>
+
+  <ul>
+    <li><a routerLink="/dashboard">Dashboard</a></li>
+    <li><a routerLink="/administracao/cargos">Cargos</a></li>
+  </ul>
+
+</nav>

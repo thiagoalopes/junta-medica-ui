@@ -42,7 +42,9 @@ export class AuthService {
 
     const body = `grant_type=password&client_id=${environment.clientId}&client_secret=${environment.clientSecret}&username=${usuario}&password=${senha}&scopes=`;
 
-    return this.http.post(this.oauthTokenUrl, body, {headers, withCredentials: true})
+    return new Promise((resolve)=>{
+
+      this.http.post(this.oauthTokenUrl, body, {headers, withCredentials: true})
       .toPromise()
       .then(response => {
         this.armazenarToken((response as Token).access_token);
@@ -50,7 +52,7 @@ export class AuthService {
         this.http.get(this.usuarioPayloadUrl, {headers, withCredentials: true})
         .toPromise()
           .then(response => {
-
+            resolve(true);
           })
           .catch(response => {
             const responseError = response.error;
@@ -61,7 +63,6 @@ export class AuthService {
             }
             return Promise.reject(response);
           });
-
       })
       .catch(response => {
         const responseError = response.error;
@@ -72,6 +73,8 @@ export class AuthService {
         }
         return Promise.reject(response);
       });
+
+    });
   }
 
   isAccessTokenInvalido(): boolean {
@@ -91,7 +94,7 @@ export class AuthService {
         refreshToken = JSON.parse(this.getCookie('refresh_token'));
       }
 
-    const body = `grant_type=refresh_token&refresh_token=${refreshToken}&client_id=${environment.clientId}&client_secret=${environment.clientSecret}&scopes=`;
+    const body = `grant_type=refresh_token&client_id=${environment.clientId}&client_secret=${environment.clientSecret}&scopes=`;
 
     return this.http.post(this.oauthTokenUrl, body, {headers, withCredentials: true})
       .toPromise()
@@ -99,13 +102,18 @@ export class AuthService {
         this.armazenarToken((response as Token).access_token);
       })
       .catch(response => {
-        console.error('Não autorizado.', response.status);
+        console.error('Não autorizado.', 401);
       });
   }
 
   temPermissao(permissao: string): boolean {
-    return JSON.parse(this.getCookie('payload'))
-      .permissoes.includes(permissao);
+    try {
+      return JSON.parse(this.getCookie('payload'))
+        .permissoes.includes(permissao);
+    } catch(e) {
+      console.error('Não autorizado');
+      return false;
+    }
   }
 
   temQualquerPermissao(permissoes: []): boolean {
@@ -118,11 +126,7 @@ export class AuthService {
   }
 
   private armazenarToken(token: string): void {
-    localStorage.setItem('token', token); // Esse token fica armazenado no navegador do usuario
-  }
-
-  private armazenarRefreshToken(refreshToken: string): void {
-    localStorage.setItem('refresh_token', refreshToken); // Esse token fica armazenado no navegador do usuario
+    localStorage.setItem('token', token);
   }
 
   private carregarToken() {

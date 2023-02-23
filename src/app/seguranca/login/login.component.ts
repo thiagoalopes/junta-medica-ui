@@ -25,8 +25,10 @@ export class LoginComponent {
 
     entrar(){
       this.authService.login(this.cpf, this.senha)
-      .then(()=>{
-        this.router.navigate(['/administracao/cargos']);
+      .then((result)=>{
+          if(result){
+            this.router.navigate(['/dashboard']);
+          }
       });
     }
 

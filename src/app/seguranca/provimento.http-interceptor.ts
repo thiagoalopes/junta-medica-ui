@@ -18,12 +18,11 @@ export class ProvimentoHttpInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    if (!req.url.includes('/oauth/token') && !req.url.includes('https://viacep.com.br') && !this.authService.isAccessTokenInvalido()) {
+    if (!req.url.includes('/oauth/token') && !req.url.includes('https://viacep.com.br')) {
       return from(this.authService.obterNovoAccessToken())
         .pipe(
           mergeMap(() => {
             if (this.authService.isAccessTokenInvalido()) {
-              throw new NotAuthenticatedError();
             }
             req = req.clone({
               setHeaders: {

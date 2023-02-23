@@ -8,14 +8,24 @@ import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule, Routes } from '@angular/router';
 
 import { AppComponent } from './app.component';
+import { NaoAtorizadoComponent } from './sahred/nao-atorizado/nao-atorizado.component';
+import { DashboardComponent } from './sahred/dashboard/dashboard.component';
 
 const routes: Routes = [
-  { path: 'login', component: LoginComponent },
+  { path: '', component: LoginComponent },
   { path: 'administracao/cargos',
     component: CargosComponent,
     canActivate: [AuthGuard],
     data: { roles: ['f_admin'] }
   },
+  { path: 'administracao/dashboard',
+    component: DashboardComponent,
+    canActivate: [AuthGuard],
+    data: { roles: ['f_admin'] }
+  },
+  { path: 'nao-autorizado', component: NaoAtorizadoComponent },
+  { path: '**', redirectTo: '/administracao/dashboard' },
+
 ]
 
 @NgModule({

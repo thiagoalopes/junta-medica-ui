@@ -1,1 +1,5 @@
-<p>cargos works!</p>
+<app-navegacao></app-navegacao>
+
+<ul>
+  <li *ngFor="let cargo of cargos">{{ cargo.id }} - {{ cargo.descricao }}</li>
+</ul>

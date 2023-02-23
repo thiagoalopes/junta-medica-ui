@@ -1,3 +1,5 @@
+import { Cargos } from './cargos.model';
+import { CargosService } from './../cargos.service';
 import { Component, OnInit } from '@angular/core';
 
 @Component({
@@ -7,9 +9,19 @@ import { Component, OnInit } from '@angular/core';
 })
 export class CargosComponent implements OnInit {
 
-  constructor() { }
+  public cargos: Cargos[];
+
+  constructor(private cargosService: CargosService) { }
 
   ngOnInit(): void {
+    this.listarCargos();
+  }
+
+  private listarCargos(){
+    this.cargosService.listarCargos()
+      .then((result)=>{
+        this.cargos = result?result.data:null;
+      })
   }
 
 }

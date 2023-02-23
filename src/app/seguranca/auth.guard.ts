@@ -21,11 +21,21 @@ export class AuthGuard implements CanActivate {
     next: ActivatedRouteSnapshot,
     state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
 
-      // if(next.data['roles'] && !this.authServive.temQualquerPermissao(next.data['roles'])){
-      //   this.router.navigate(['/']);
-      //   return false
-      // }
+      if (this.authServive.isAccessTokenInvalido()) {
+        this.authServive.obterNovoAccessToken()
+        .then(() => {
+          if (this.authServive.isAccessTokenInvalido()) {
+            this.router.navigate(['/']);
+            return false;
+          }
+          return true;
+        });
+      } else if(next.data['roles'] && !this.authServive.temQualquerPermissao(next.data['roles'])){
+        this.router.navigate(['/nao-autorizado']);
+        return false
+      }
       return true;
+
 
       // return new Promise((resolve, reject)=>{
 
